@@ -1,0 +1,130 @@
+services:
+  # API Gateway - Punto de entrada único a los microservicios
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - VEHICULAR_SERVICE_URL=http://impuesto-vehicular-frontend:3001
+      - PREDIAL_SERVICE_URL=http://impuesto-predial-app:3002
+      - CONSUMO_SERVICE_URL=http://impuesto-consumo-app:3003
+      - GANADO_SERVICE_URL=http://impuesto-ganado-app:3004
+    networks:
+      - impuestos-network
+    restart: unless-stopped
+
+  # Portal Principal de Impuestos
+  portal-impuestos:
+    build:
+      context: ./portal_impuestos
+      dockerfile: Dockerfile
+    container_name: portal-impuestos
+    ports:
+      - "3000:3000"  # Exponer en el puerto 80 para acceso web
+    depends_on:
+      - api-gateway
+    networks:
+      - impuestos-network
+    environment:
+      - API_GATEWAY_URL=http://api-gateway:8080
+    restart: unless-stopped
+
+  # Microservicio Impuesto Vehicular
+  impuesto-vehicular-frontend:
+    build:
+      context: ./impuesto-vehicular/frontend
+      dockerfile: Dockerfile
+    container_name: impuesto-vehicular-frontend
+    ports:
+      - "3001:3001"
+    depends_on:
+      - impuesto-vehicular-backend
+    networks:
+      - impuestos-network
+    restart: unless-stopped
+
+  impuesto-vehicular-backend:
+    build:
+      context: ./impuesto-vehicular/backend
+      dockerfile: Dockerfile
+    container_name: impuesto-vehicular-backend
+    depends_on:
+      impuesto-vehicular-db:
+        condition: service_healthy
+    environment:
+      - POSTGRES_SERVER=impuesto-vehicular-db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=superapostgres
+      - POSTGRES_DB=tax_vehicle_db
+      - DATABASE_URL=postgresql://postgres:superapostgres@impuesto-vehicular-db:5432/tax_vehicle_db
+      - SECRET_KEY=23d533c89c1e3703b90ecbb4ea2436762989b48903b360b38bd5eb63cdbcf5ce
+      - ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=20
+      - FRONTEND_URL=http://impuesto-vehicular-frontend:3001
+    networks:
+      - impuestos-network
+    restart: unless-stopped
+
+  impuesto-vehicular-db:
+    image: postgres:14
+    container_name: impuesto-vehicular-db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=superapostgres
+      - POSTGRES_DB=tax_vehicle_db
+    volumes:
+      - impuesto-vehicular-data:/var/lib/postgresql/data
+    networks:
+      - impuestos-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Microservicio Impuesto Predial
+  impuesto-predial-app:
+    build:
+      context: ./predial_cata
+      dockerfile: Dockerfile
+    container_name: impuesto-predial-app
+    ports:
+      - "3002:3002"
+    networks:
+      - impuestos-network
+    restart: unless-stopped
+
+  # Microservicio Impuesto de Consumo
+  impuesto-consumo-app:
+    build:
+      context: ./impuestoConsumo
+      dockerfile: Dockerfile
+    container_name: impuesto-consumo-app
+    ports:
+      - "3003:3003"
+    networks:
+      - impuestos-network
+    restart: unless-stopped
+
+  # Microservicio Impuesto Ganado Mayor
+  impuesto-ganado-app:
+    build:
+      context: ./ganadoMayor
+      dockerfile: Dockerfile
+    container_name: impuesto-ganado-app
+    ports:
+      - "3004:3004"
+    networks:
+      - impuestos-network
+    restart: unless-stopped
+
+networks:
+  impuestos-network:
+    driver: bridge
+
+volumes:
+  impuesto-vehicular-data:
