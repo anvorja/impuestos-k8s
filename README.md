@@ -16,7 +16,7 @@ Para utilizar correctamente este sistema, debe mantener la siguiente estructura 
 ├── impuesto-vehicular/    # Servicio de impuesto vehicular
 ├── kubernetes/            # Configuraciones de Kubernetes
 ├── portal_impuestos/      # Portal web para gestión de impuestos
-├── predial_cata/          # Servicio de impuesto predial y catastro
+├── property_tax/          # Servicio de impuesto predial y catastro
 └── docker-compose.yml     # Archivo de configuración de Docker Compose
 ```
 

@@ -89,7 +89,7 @@ services:
   # Microservicio Impuesto Predial
   impuesto-predial-app:
     build:
-      context: ./predial_cata
+      context: ./property_tax
       dockerfile: Dockerfile
     container_name: impuesto-predial-app
     ports:
