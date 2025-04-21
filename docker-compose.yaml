@@ -39,9 +39,12 @@ services:
       - API_GATEWAY_URL=http://api-gateway:8080
     restart: unless-stopped
 
-  # Servicio n8n para chatbot
+  # Servicio n8n para chatbot, para configuración inicial
+  # Comentar/Descomentar una vez recreada la imagen
+  # Tener en cuenta el volumen n8n_data: (se comenta cuando ya ha sido recreada la imagen)
   n8n:
-    image: n8nio/n8n
+    #image: n8nio/n8n
+    image: anborja/n8n-impuestos:configurado
     container_name: n8n
     restart: always
     ports:
@@ -58,7 +61,10 @@ services:
       - N8N_RUNNERS_ENABLED=true
       - GROQ_API_KEY=${GROQ_API_KEY}
     volumes:
-      - n8n_data:/home/node/.n8n
+      #  se necesita n8n_data:/home/node/.n8n para config inicial
+      #- n8n_data:/home/node/.n8n
+      #  se necesita n8n_config:/home/node/.n8n/public:ro despues de recreada la imagen
+      - n8n_config:/home/node/.n8n/public:ro
     networks:
       - impuestos-network
     healthcheck:
@@ -191,5 +197,6 @@ networks:
 
 volumes:
   impuesto-vehicular-data:
-  n8n_data:
+  # se comenta n8n_data cuando ya está recreada la imagen configurada
+  #n8n_data:
   n8n_config:
